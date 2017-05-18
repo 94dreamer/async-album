@@ -280,9 +280,16 @@ export default function applyMiddleware(...middlewares) {
 }
 ```
 
-需要传入一个中间件函数数组
+需要传入一个中间件函数数组返回一个 其实就是一个enhancer。
+同时在内部暴露getState和dispatch给第三方中间件使用。
 
-返回一个函数。
+### combineReducers.js
+
+合并reducer的方法
+
+### bindActionCreators.js
+
+`bindActionCreators` 函数可以生成直接触发 action 的函数；
 
 
 
