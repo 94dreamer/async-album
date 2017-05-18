@@ -87,6 +87,9 @@ createStore 接受三个参数 reducer函数，初始状态，enhancer增强器�
     }
   }
 ```
+
+#### getState
+
 这个函数根据当前监听器复制出新的下一个监听列表为新的引用。
 
 ```
@@ -95,6 +98,8 @@ createStore 接受三个参数 reducer函数，初始状态，enhancer增强器�
   }
 ```
 getState函数返回 当前state的引用。
+
+#### subscribe
 
 ```
   function subscribe(listener) {
@@ -124,6 +129,7 @@ getState函数返回 当前state的引用。
 传入到subscribe方法的参数的必须是一个函数。闭包保存一个 isSubscribed 变量，初始化为true。把参数listner push进nextListeners数组。
 返回一个函数，用来卸载当前保存listener。
 
+#### dispatch
 
 ```
   function dispatch(action) {
@@ -168,13 +174,86 @@ dispatch函数调用时需要传入一个action对象，其中type属性不能�
 如果运行成功没有抛出错误，把 isDispatching 重置为false。
 然后遍历监听器数组，运行监听器函数，返回action。
 
+#### replaceReducer
+
+```
+  function replaceReducer(nextReducer) {
+    if (typeof nextReducer !== 'function') {
+      throw new Error('Expected the nextReducer to be a function.')
+    }
+
+    currentReducer = nextReducer
+    dispatch({ type: ActionTypes.INIT })
+  }
+```
+替换当前的reducer，并发送默认的ActionTypes.INIT的action。
+
+```
+
+#### observable
+
+```
+  function observable() {
+    const outerSubscribe = subscribe
+    return {
+      subscribe(observer) {
+        if (typeof observer !== 'object') {
+          throw new TypeError('Expected the observer to be an object.')
+        }
+
+        function observeState() {
+          if (observer.next) {
+            observer.next(getState())
+          }
+        }
+
+        observeState()
+        const unsubscribe = outerSubscribe(observeState)
+        return { unsubscribe }
+      },
+
+      [$$observable]() {
+        return this
+      }
+    }
+  }
+```
+
+对于这个函数，是不直接暴露给开发者使用的，它提供了给其他观察者模式／响应式库的交互操作。
+
+```
+  dispatch({ type: ActionTypes.INIT })
+
+  return {
+    dispatch,
+    subscribe,
+    getState,
+    replaceReducer,
+    [$$observable]: observable
+
+```
+最后，执行默认的ActionTypes.INIT action，触发默认state状态。
+
+在命名空间下暴露出dispatch，subscribe，getState，replaceReducer。
 
 
+### compose.js
 
+```
+export default function compose(...funcs) {
+  if (funcs.length === 0) {
+    return arg => arg
+  }
 
+  if (funcs.length === 1) {
+    return funcs[0]
+  }
 
+  return funcs.reduce((a, b) => (...args) => a(b(...args)))
+}
+```
 
-
+compose函数接受一个包含函数的数组，并把它们合并成一个组合数组。
 
 
 
