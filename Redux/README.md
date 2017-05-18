@@ -256,7 +256,33 @@ export default function compose(...funcs) {
 compose函数接受一个包含函数的数组，并把它们合并成一个组合数组。
 
 
+### applyMiddleware.js
 
+```
+export default function applyMiddleware(...middlewares) {
+  return (createStore) => (reducer, preloadedState, enhancer) => {
+    const store = createStore(reducer, preloadedState, enhancer)
+    let dispatch = store.dispatch
+    let chain = []
+
+    const middlewareAPI = {
+      getState: store.getState,
+      dispatch: (action) => dispatch(action)
+    }
+    chain = middlewares.map(middleware => middleware(middlewareAPI))
+    dispatch = compose(...chain)(store.dispatch)
+
+    return {
+      ...store,
+      dispatch
+    }
+  }
+}
+```
+
+需要传入一个中间件函数数组
+
+返回一个函数。
 
 
 
